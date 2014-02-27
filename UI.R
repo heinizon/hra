@@ -1,6 +1,5 @@
 library(shiny)
-
-dat <- c("Fancast","Bose", "Comcast")
+library(rCharts)
 
 # Define UI for miles per gallon application
 shinyUI(pageWithSidebar(
@@ -12,28 +11,27 @@ shinyUI(pageWithSidebar(
   # and to specify whether outliers should be included
   sidebarPanel(
     
-    checkboxInput("intercept", "include intercept?", TRUE),
-    checkboxInput("xlog", "log x?", FALSE),
-    checkboxInput("ylog", "log y?", FALSE)
+    checkboxInput("intercept", "Non-Zero Intercept", F),
+    checkboxInput("xlog", "log(x)", T),
+    checkboxInput("ylog", "log(y)", T)
   ),
   
   mainPanel(
-      tabsetPanel(
-        tabPanel("Upload/Output", 
-                  fileInput("datfiles", "Pick your data file:")
-        ),
+    tabsetPanel(
+      tabPanel("Upload/Output", 
+               fileInput("datfiles", "Pick your data file:")
+      ),
       
-        tabPanel("Data", tableOutput("dat")),
-        tabPanel('Model', 
-                 plotOutput('thePlot'),
-                 verbatimTextOutput('model')),
-        tabPanel("Goal Seek",
-                 numericInput("goal", "What is your CPA Goal?", 0, 0, 10000),
-                 numericInput("maxspend", "What is your max daily spend?", 0, 0, 10000000),
-                 verbatimTextOutput("SpendHeadroom")
-                 )
-                
-
+      tabPanel("Data", tableOutput("dat")),
+      tabPanel('Model', 
+               plotOutput('thePlot'),
+               verbatimTextOutput('model')),
+      tabPanel("Goal Seek",
+               numericInput("goal", "What is your CPA Goal?", 0, 0, 10000),
+               numericInput("maxspend", "What is your maximum daily spend?", 0, 0, 10000000),
+               verbatimTextOutput("SpendHeadroom")
       )
+      
     )
+  )
 ))
