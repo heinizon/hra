@@ -1,7 +1,27 @@
-library(shiny)
-library(rCharts)
+install_load <- function (package1, ...) 
+{
+  # convert arguments to vector
+  packages <- c(package1, ...)
+  
+  for(package in packages){
+    
+    # if packages exists, load into environment
+    if(package %in% rownames(installed.packages()))
+      do.call('library', list(package)) 
+    
+    # if package does not exist, download, and then load
+    else {
+      install.packages(package)
+      do.call("library", list(package))
+    }
+    
+  }
+  
+}
 
-# Define UI for miles per gallon application
+
+install_load('shiny')
+
 shinyUI(pageWithSidebar(
   
   # Application title
