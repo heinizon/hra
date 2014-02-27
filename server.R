@@ -1,11 +1,26 @@
-library(shiny)
-library(datasets)
-library(xlsx)
-library(ggplot2)
-library(rCharts)
-library(scales)
+install_load <- function (package1, ...) 
+{
+  # convert arguments to vector
+  packages <- c(package1, ...)
 
-# Define server logic required to plot various variables against mpg
+  for(package in packages){
+    
+    # if packages exists, load into environment
+    if(package %in% rownames(installed.packages()))
+      do.call('library', list(package)) 
+    
+    # if package does not exist, download, and then load
+    else {
+      install.packages(package)
+      do.call("library", list(package))
+    }
+    
+  }
+  
+}
+
+install_load('shiny', 'xlsx', 'ggplot2', 'scales')
+
 shinyServer(function(input, output) {
   
   output$dat <- renderTable({
