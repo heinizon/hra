@@ -2,7 +2,7 @@ install_load <- function (package1, ...)
 {
   # convert arguments to vector
   packages <- c(package1, ...)
-
+  
   for(package in packages){
     
     # if packages exists, load into environment
@@ -159,6 +159,41 @@ shinyServer(function(input, output) {
     outputcpa$cpa <- round(outputcpa$cpa, digits=4)
     
     output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
+                    "\n", "Estimated Conv:", outputy,
+                    "\n", "Estimated CPA:", outputcpa)
+    output
+  })
+  
+  output$BudgetSeekOutput <- renderText({
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(NULL)
+    
+    dailybud <- input$dailybudget
+    if(is.null(dailybud))
+      return(NULL)
+    
+    if(dailybud == 0)
+      return(NULL)
+    
+    dat <- read.xlsx(infile$datapath, 1)
+    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
+                        origin = "1970-01-01")
+    dat$Date <- paste0(dat$Date)
+    
+    model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
+    
+    
+    if (input$intercept){
+      slope <- data.frame(summary(model)$coef)$Estimate[2]
+      intercept <- data.frame(summary(model)$coef)$Estimate[1]
+    }
+    else {
+      slope <- data.frame(summary(model)$coef)$Estimate[1]
+      intercept <- 0
+    }
+    
+    output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
                       "\n", "Estimated Conv:", outputy,
                       "\n", "Estimated CPA:",outputcpa)
     output
@@ -195,7 +230,6 @@ shinyServer(function(input, output) {
       slope <- data.frame(summary(model)$coef)$Estimate[1]
       intercept <- 0
     }
-    
     
     if (input$xlog){
       if (input$ylog) {  
@@ -314,6 +348,7 @@ shinyServer(function(input, output) {
   #returns a model object given a data input
   #and boolean objects to include y log, x log and intercept
   modelhr <- function(dat, ylog, xlog, intercept) {
+    
     if (input$xlog)
       if (input$ylog)
         if (input$intercept)
@@ -341,6 +376,25 @@ shinyServer(function(input, output) {
   } #End ModelHR Function
   
   
+  dataThreshold <- function(dat){
+    
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(NULL)
+    
+    dat <- read.xlsx(infile$datapath, 1)
+    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
+                        origin = "1970-01-01")
+    dat$Date <- paste0(dat$Date)
+    dat$Spend <- dat$Gross.Media.Spend
+    
+    dat <- subset(dat, Gross.Media.Spend > 10)
+    
+    if(nrow(dat) >= 14)
+      dat
+    else
+      paste('Does not meet minimum observations threshold')
+  }
   
   #dataThreshold
   #returns either a dataframe containing data
