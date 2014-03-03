@@ -50,7 +50,11 @@ shinyUI(pageWithSidebar(
                numericInput("goal", "What is your CPA Goal?", 0, 0, 10000),
                numericInput("maxspend", "What is your maximum daily spend?", 0, 0, 10000000),
                verbatimTextOutput("SpendHeadroom")
-      )
+      ),
+      tabPanel("Budget Seek",
+               numericInput("dailybudget", "What is your Daily Spend Limit?",0,0,1000000000),
+               verbatimTextOutput("BudgetSeekOutput")
+               )
       
     )
   )
