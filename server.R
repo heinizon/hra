@@ -157,6 +157,7 @@ shinyServer(function(input, output) {
     outputy$y <- round(outputy$y)
     outputcpa <- subset(df, goaldif == mindif, select = cpa)[1]
     outputcpa$cpa <- round(outputcpa$cpa, digits=4)
+<<<<<<< HEAD
     
     output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
                     "\n", "Estimated Conv:", outputy,
@@ -193,6 +194,44 @@ shinyServer(function(input, output) {
       intercept <- 0
     }
     
+=======
+    
+    output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
+                      "\n", "Estimated Conv:", outputy,
+                      "\n", "Estimated CPA:",outputcpa)
+    output
+  })
+  
+  output$BudgetSeekOutput <- renderText({
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(NULL)
+    
+    dailybud <- input$dailybudget
+    if(is.null(dailybud))
+      return(NULL)
+    
+    if(dailybud == 0)
+      return(NULL)
+    
+    dat <- read.xlsx(infile$datapath, 1)
+    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
+                        origin = "1970-01-01")
+    dat$Date <- paste0(dat$Date)
+    
+    model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
+    
+    
+    if (input$intercept){
+      slope <- data.frame(summary(model)$coef)$Estimate[2]
+      intercept <- data.frame(summary(model)$coef)$Estimate[1]
+    }
+    else {
+      slope <- data.frame(summary(model)$coef)$Estimate[1]
+      intercept <- 0
+    }
+    
+>>>>>>> 99868d74a354b7bcf29de7ae2ee80b5ce70f3c12
     
     if (input$xlog){
       if (input$ylog) {  
@@ -253,6 +292,7 @@ shinyServer(function(input, output) {
     model
   }
   
+<<<<<<< HEAD
   dataThreshold <- function(dat){
     
     infile <- input$datfiles
@@ -272,5 +312,7 @@ shinyServer(function(input, output) {
     else
       paste('Does not meet minimum observations threshold')
   }
+=======
+>>>>>>> 99868d74a354b7bcf29de7ae2ee80b5ce70f3c12
   
 })
