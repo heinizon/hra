@@ -41,7 +41,7 @@ shinyServer(function(input, output) {
       dat$Conv <- log1p(dat$Conversions)
     
     dat
-  })
+  }) #End data rendering for Data tab
   
   output$model <- renderPrint({
     infile <- input$datfiles
@@ -53,7 +53,7 @@ shinyServer(function(input, output) {
     model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
     
     summary(model)
-  })
+  }) #End of Model tab Model output
   
   output$thePlot <- renderPlot({
     infile <- input$datfiles
@@ -86,7 +86,7 @@ shinyServer(function(input, output) {
       geom_point()
     
     print(thePlot)
-  })
+  }) #End thePlot variable output for Model tab
   
   output$SpendHeadroom <- renderText({
     infile <- input$datfiles
@@ -162,8 +162,11 @@ shinyServer(function(input, output) {
                       "\n", "Estimated Conv:", outputy,
                       "\n", "Estimated CPA:",outputcpa)
     output
-  })
+  }) #End GoalSeek Output function (SpendHeadroom variable)
   
+  
+  #BudgetSeekOutput
+  #Outputs CPA & Conversions for a single day
   output$BudgetSeekOutput <- renderText({
     infile <- input$datfiles
     if (is.null(infile))
@@ -223,8 +226,93 @@ shinyServer(function(input, output) {
                     "\n", "Estimated Conv:", outputy,
                     "\n", "Estimated CPA:",outputcpa)
     output
-  })
+  })#End OutputBugetSeek output
   
+  #BudgetSeekFlight
+  #Outputs text string containing conversions & CPA
+  #for remaining flight
+  output$BudgetSeekFlight <- renderText({
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(NULL)
+    
+    dailybud <- input$flightbudget
+    if(is.null(dailybud))
+      return(NULL)
+    
+    if(dailybud == 0)
+      return(NULL)
+    
+    dat <- read.xlsx(infile$datapath, 1)
+    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
+                        origin = "1970-01-01")
+    dat$Date <- paste0(dat$Date)
+    
+    daysinflight <- input$enddate - input$startdate + 1
+    daysremaining <- input$enddate - Sys.Date() + 1
+    
+    dailyspend <- input$flightbudget / as.numeric(daysremaining)
+    xdf <- data.frame(x=c(dailyspend))
+    xdf <- evalmodelhr(xdf, dat, input$ylog, input$xlog, input$intercept)
+    print(xdf)
+    print(as.numeric(daysremaining))
+    outputy <- xdf$y[1] * as.numeric(daysremaining)
+    outputcpa <- input$flightbudget/ outputy
+    outputy <- round(outputy)
+    outputcpa <- round(outputcpa, digits=4)
+    
+    output <- paste("Budget Remaining: ", dollar(input$flightbudget), "for the flight",
+                    "\n", "Estimated Conv for remaining flight:", outputy,
+                    "\n", "Estimated CPA for remaining flight:",outputcpa)
+    output
+  }) #End BudgetSeekFlight output
+
+
+  
+  #evalmodelhr
+  #returns a dataframe object with a new column ("y")
+  #y includes the evaluated model function
+  #takes a dataframe input, along with model parameters
+  #dataframe input must havea column called "x"
+  evalmodelhr <- function(xdf, dat, ylog, xlog, intercept) {
+      model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
+      df <- data.frame(xdf)
+      
+      
+      if (input$intercept){
+        slope <- data.frame(summary(model)$coef)$Estimate[2]
+        intercept <- data.frame(summary(model)$coef)$Estimate[1]
+      }
+      else {
+        slope <- data.frame(summary(model)$coef)$Estimate[1]
+        intercept <- 0
+      }
+      
+      if (input$xlog){
+        if (input$ylog) {  
+          #branch for log1p(y) ~ log1p(x)
+          df$y <- ((df$x + 1)^slope) * exp(intercept) - 1
+        }
+        else {
+          #branch for y~log1p(x)
+          df$y <- (log1p(df$x) * slope) + intercept
+        }
+      }
+      else if (input$ylog) {
+        #branch for log1p(y) ~ x
+        df$y <- exp((df$x) * slope) * exp(intercept) - 1
+      }
+      else {
+        #branch for y~x
+        df$y <- ((df$x) * slope) + intercept
+      }
+      df
+  } #end EvalModelHR Function
+  
+  
+  #modelhr
+  #returns a model object given a data input
+  #and boolean objects to include y log, x log and intercept
   modelhr <- function(dat, ylog, xlog, intercept) {
     if (input$xlog)
       if (input$ylog)
@@ -250,7 +338,36 @@ shinyServer(function(input, output) {
     else
       model <- lm(Conversions ~ 0 + Gross.Media.Spend, data = dat)
     model
-  }
+  } #End ModelHR Function
   
   
-})
+  
+  #dataThreshold
+  #returns either a dataframe containing data
+  #or returns a string "Does not meet minimum observations threshold"
+  #function discards days with Spend<10
+  #and ensures more than 14 days of data are available
+  dataThreshold <- function(dat){
+    
+    infile <- input$datfiles
+    
+    if (is.null(infile))
+      
+      return(NULL)
+    
+    dat <- read.xlsx(infile$datapath, 1)
+    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",    
+                        origin = "1970-01-01")
+    
+    dat$Date <- paste0(dat$Date)
+    dat$Spend <- dat$Gross.Media.Spend
+    
+    dat <- subset(dat, Gross.Media.Spend > 10)
+    
+    if(nrow(dat) >= 14)
+      dat
+    else
+      paste('Does not meet minimum observations threshold')
+  } #End dataThreshold function
+    
+}) # end ShinyServer I/O

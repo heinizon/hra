@@ -38,7 +38,7 @@ shinyUI(pageWithSidebar(
   
   mainPanel(
     tabsetPanel(
-      tabPanel("Upload/Output", 
+      tabPanel("Upload", 
                fileInput("datfiles", "Pick your data file:")
       ),
       
@@ -50,12 +50,28 @@ shinyUI(pageWithSidebar(
                numericInput("goal", "What is your CPA Goal?", 0, 0, 10000),
                numericInput("maxspend", "What is your maximum daily spend?", 0, 0, 10000000),
                verbatimTextOutput("SpendHeadroom")
-      ),
-      tabPanel("Budget Seek",
-               numericInput("dailybudget", "What is your Daily Spend Limit?",0,0,1000000000),
-               verbatimTextOutput("BudgetSeekOutput")
-               )
+      ), #End GoalSeek tab
       
-    )
-  )
+      #Budget Seek Tab
+      tabPanel("Budget Seek",
+              wellPanel(
+                  h4("Daily Estimates"),
+                  numericInput("dailybudget", "What is your Daily Spend Limit?",0,0,1000000000),
+                  verbatimTextOutput("BudgetSeekOutput")
+               ),
+               wellPanel(
+                        h4("Flight Estimates"),
+                        dateInput("startdate", "Start Date", value= "2014-1-1", min = "2010-1-1", max = "2020-12-31",
+                                  format = "mm/dd/yyyy"),
+                        dateInput("enddate", "End Date", value= "2014-3-31", min = "2010-1-1", max = "2020-12-31",
+                                  format = "mm/dd/yyyy"),
+
+                        numericInput("flightbudget", "What is your Remaining Budget with Incremental?",0,0,1000000000),
+                        verbatimTextOutput("BudgetSeekFlight")
+               )
+               
+      ) #End BudgetSeek Tab
+      
+    ) #End TabSetPanel
+  )  #End MainPanel
 ))
