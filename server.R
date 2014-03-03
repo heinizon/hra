@@ -288,8 +288,7 @@ shinyServer(function(input, output) {
     dailyspend <- input$flightbudget / as.numeric(daysremaining)
     xdf <- data.frame(x=c(dailyspend))
     xdf <- evalmodelhr(xdf, dat, input$ylog, input$xlog, input$intercept)
-    print(xdf)
-    print(as.numeric(daysremaining))
+
     outputy <- xdf$y[1] * as.numeric(daysremaining)
     outputcpa <- input$flightbudget/ outputy
     outputy <- round(outputy)
@@ -376,6 +375,12 @@ shinyServer(function(input, output) {
   } #End ModelHR Function
   
   
+  
+  #dataThreshold
+  #returns either a dataframe containing data
+  #or returns a string "Does not meet minimum observations threshold"
+  #function discards days with Spend<10
+  #and ensures more than 14 days of data are available
   dataThreshold <- function(dat){
     
     infile <- input$datfiles
@@ -394,34 +399,7 @@ shinyServer(function(input, output) {
       dat
     else
       paste('Does not meet minimum observations threshold')
-  }
+  } # End DataThreshold function
   
-  #dataThreshold
-  #returns either a dataframe containing data
-  #or returns a string "Does not meet minimum observations threshold"
-  #function discards days with Spend<10
-  #and ensures more than 14 days of data are available
-  dataThreshold <- function(dat){
-    
-    infile <- input$datfiles
-    
-    if (is.null(infile))
-      
-      return(NULL)
-    
-    dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",    
-                        origin = "1970-01-01")
-    
-    dat$Date <- paste0(dat$Date)
-    dat$Spend <- dat$Gross.Media.Spend
-    
-    dat <- subset(dat, Gross.Media.Spend > 10)
-    
-    if(nrow(dat) >= 14)
-      dat
-    else
-      paste('Does not meet minimum observations threshold')
-  } #End dataThreshold function
     
 }) # end ShinyServer I/O
