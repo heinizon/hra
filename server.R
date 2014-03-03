@@ -157,11 +157,10 @@ shinyServer(function(input, output) {
     outputy$y <- round(outputy$y)
     outputcpa <- subset(df, goaldif == mindif, select = cpa)[1]
     outputcpa$cpa <- round(outputcpa$cpa, digits=4)
-<<<<<<< HEAD
     
     output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
                     "\n", "Estimated Conv:", outputy,
-                    "\n", "Estimated CPA:",outputcpa)
+                    "\n", "Estimated CPA:", outputcpa)
     output
   })
   
@@ -193,8 +192,6 @@ shinyServer(function(input, output) {
       slope <- data.frame(summary(model)$coef)$Estimate[1]
       intercept <- 0
     }
-    
-=======
     
     output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
                       "\n", "Estimated Conv:", outputy,
@@ -230,8 +227,6 @@ shinyServer(function(input, output) {
       slope <- data.frame(summary(model)$coef)$Estimate[1]
       intercept <- 0
     }
-    
->>>>>>> 99868d74a354b7bcf29de7ae2ee80b5ce70f3c12
     
     if (input$xlog){
       if (input$ylog) {  
@@ -292,7 +287,6 @@ shinyServer(function(input, output) {
     model
   }
   
-<<<<<<< HEAD
   dataThreshold <- function(dat){
     
     infile <- input$datfiles
@@ -312,7 +306,5 @@ shinyServer(function(input, output) {
     else
       paste('Does not meet minimum observations threshold')
   }
-=======
->>>>>>> 99868d74a354b7bcf29de7ae2ee80b5ce70f3c12
   
 })
