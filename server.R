@@ -28,17 +28,24 @@ shinyServer(function(input, output) {
     if (is.null(infile))
       return(NULL)
     
-    dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-                        origin = "1970-01-01")
-    dat$Date <- paste0(dat$Date)
-    dat$Spend <- dat$Gross.Media.Spend
-    if (input$xlog)
-      dat$Spend <-log1p(dat$Gross.Media.Spend)
-    
-    dat$Conv <- dat$Conversions
-    if (input$ylog)
-      dat$Conv <- log1p(dat$Conversions)
+#     dat <- read.xlsx(infile$datapath, 1)
+#     dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
+#                         origin = "1970-01-01")
+#     dat$Date <- paste0(dat$Date)
+#     dat$Spend <- dat$Gross.Media.Spend
+#     dat <- dataThreshold(dat)
+#     print(head(dat))
+#     
+#     if (input$xlog)
+#       dat$Spend <-log1p(dat$Gross.Media.Spend)
+#     
+#     dat$Conv <- dat$Conversions
+#     if (input$ylog)
+#       dat$Conv <- log1p(dat$Conversions)
+
+    dat <- dataThreshold()
+#     if (dat = "Does not meet minimum observations threshold")
+#         return ("Does not meet minimum observations threshold")
     
     dat
   }) #End data rendering for Data tab
@@ -48,7 +55,12 @@ shinyServer(function(input, output) {
     if (is.null(infile))
       return(paste("No Data Has Been Uploaded"))
     
-    dat <- read.xlsx(infile$datapath, 1)
+    #dat <- read.xlsx(infile$datapath, 1)
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(paste("Data does not meet minimum observation threshold.",
+                      "At least 14 days of data should be included"))
+    }
     
     model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
     
@@ -104,10 +116,11 @@ shinyServer(function(input, output) {
     if(maxspendin == 0)
       return(NULL)
     
-    dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-                        origin = "1970-01-01")
-    dat$Date <- paste0(dat$Date)
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(paste("Data does not meet minimum observation threshold.",
+                   "At least 14 days of data should be included"))
+    }
     
     model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
     
@@ -125,28 +138,7 @@ shinyServer(function(input, output) {
     
     df <- data.frame(x=seq(xmin, input$maxspend, (input$maxspend - xmin)/10000))
     
-    if (input$xlog){
-      if (input$ylog) {  
-        #branch for log1p(y) ~ log1p(x)
-        df$x1 <- df$x + 1
-        df$y <- ((df$x1)^slope) * exp(intercept) - 1
-      }
-      else {
-        #branch for y~log1p(x)
-        df$x1 <- df$x + 1
-        df$y <- (log(df$x1) * slope) + intercept
-      }
-    }
-    else if (input$ylog) {
-      #branch for log1p(y) ~ x
-      df$x1 <- df$x
-      df$y <- exp((df$x1) * slope) * exp(intercept) - 1
-    }
-    else {
-      #branch for y~x
-      df$x1 <- df$x
-      df$y <- ((df$x1) * slope) + intercept
-    }
+    df <- evalmodelhr(df, dat, input$ylog, input$xlog, input$intercept)
     
     df$goal <- effgoal
     df$cpa <- df$x / df$y
@@ -164,41 +156,6 @@ shinyServer(function(input, output) {
     output
   })
   
-  output$BudgetSeekOutput <- renderText({
-    infile <- input$datfiles
-    if (is.null(infile))
-      return(NULL)
-    
-    dailybud <- input$dailybudget
-    if(is.null(dailybud))
-      return(NULL)
-    
-    if(dailybud == 0)
-      return(NULL)
-    
-    dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-                        origin = "1970-01-01")
-    dat$Date <- paste0(dat$Date)
-    
-    model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
-    
-    
-    if (input$intercept){
-      slope <- data.frame(summary(model)$coef)$Estimate[2]
-      intercept <- data.frame(summary(model)$coef)$Estimate[1]
-    }
-    else {
-      slope <- data.frame(summary(model)$coef)$Estimate[1]
-      intercept <- 0
-    }
-    
-    output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
-                      "\n", "Estimated Conv:", outputy,
-                      "\n", "Estimated CPA:",outputcpa)
-    output
-  }) #End GoalSeek Output function (SpendHeadroom variable)
-  
   
   #BudgetSeekOutput
   #Outputs CPA & Conversions for a single day
@@ -214,10 +171,11 @@ shinyServer(function(input, output) {
     if(dailybud == 0)
       return(NULL)
     
-    dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-                        origin = "1970-01-01")
-    dat$Date <- paste0(dat$Date)
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(paste("Data does not meet minimum observation threshold.",
+                   "At least 14 days of data should be included"))
+    }
     
     model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
     
@@ -259,6 +217,11 @@ shinyServer(function(input, output) {
     output <- paste("We can efficiently spend up to ", dollar(input$dailybudget), "daily",
                     "\n", "Estimated Conv:", outputy,
                     "\n", "Estimated CPA:",outputcpa)
+    
+    if (anova(model)$`Pr(>F)`[1] > .05){
+      output <- paste("WARNING:  Model is not statistically significant.", "\n", "\n", output)
+    }
+    
     output
   })#End OutputBugetSeek output
   
@@ -276,12 +239,12 @@ shinyServer(function(input, output) {
     
     if(dailybud == 0)
       return(NULL)
-    
-    dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-                        origin = "1970-01-01")
-    dat$Date <- paste0(dat$Date)
-    
+
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(paste("Data does not meet minimum observation threshold.",
+                   "At least 14 days of data should be included"))
+    }
     daysinflight <- input$enddate - input$startdate + 1
     daysremaining <- input$enddate - Sys.Date() + 1
     
@@ -303,10 +266,9 @@ shinyServer(function(input, output) {
 
   
   #evalmodelhr
-  #returns a dataframe object with a new column ("y")
-  #y includes the evaluated model function
-  #takes a dataframe input, along with model parameters
-  #dataframe input must havea column called "x"
+  #returns a dataframe object with a column ("y")
+    #containing the evaluated model
+  #Input is a data frame containing a column "x", used to evaluate the y's
   evalmodelhr <- function(xdf, dat, ylog, xlog, intercept) {
       model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
       df <- data.frame(xdf)
@@ -377,11 +339,11 @@ shinyServer(function(input, output) {
   
   
   #dataThreshold
-  #returns either a dataframe containing data
-  #or returns a string "Does not meet minimum observations threshold"
+  #returns a dataframe containing imported data
+  #will return -99 in 1st cell of column "Gross.Media.Spend" if there is not enough data
   #function discards days with Spend<10
   #and ensures more than 14 days of data are available
-  dataThreshold <- function(dat){
+  dataThreshold <- function(){
     
     infile <- input$datfiles
     if (is.null(infile))
@@ -395,10 +357,20 @@ shinyServer(function(input, output) {
     
     dat <- subset(dat, Gross.Media.Spend > 10)
     
+    if (input$xlog)
+      dat$Spend <-log1p(dat$Gross.Media.Spend)
+    
+    dat$Conv <- dat$Conversions
+    if (input$ylog)
+      dat$Conv <- log1p(dat$Conversions)
+    
     if(nrow(dat) >= 14)
       dat
     else
-      paste('Does not meet minimum observations threshold')
+      dat <- data.frame(Gross.Media.Spend=c(-99,paste('Does not meet minimum observations threshold.
+                                      Need at least 14 days of data to perform analysis')))
+    
+    dat
   } # End DataThreshold function
   
     
