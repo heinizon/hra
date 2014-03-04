@@ -27,35 +27,21 @@ shinyServer(function(input, output) {
     infile <- input$datfiles
     if (is.null(infile))
       return(NULL)
-    
-#     dat <- read.xlsx(infile$datapath, 1)
-#     dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-#                         origin = "1970-01-01")
-#     dat$Date <- paste0(dat$Date)
-#     dat$Spend <- dat$Gross.Media.Spend
-#     dat <- dataThreshold(dat)
-#     print(head(dat))
-#     
-#     if (input$xlog)
-#       dat$Spend <-log1p(dat$Gross.Media.Spend)
-#     
-#     dat$Conv <- dat$Conversions
-#     if (input$ylog)
-#       dat$Conv <- log1p(dat$Conversions)
 
     dat <- dataThreshold()
-#     if (dat = "Does not meet minimum observations threshold")
-#         return ("Does not meet minimum observations threshold")
     
     dat
   }) #End data rendering for Data tab
+  
+  output$DataInputMessage <- renderText(paste("Your file should contain at least the following columns:",
+        "Date, Gross Media Spend, Conversions", "\n",
+        "Each day should appear only once in your data."))
   
   output$model <- renderPrint({
     infile <- input$datfiles
     if (is.null(infile))
       return(paste("No Data Has Been Uploaded"))
     
-    #dat <- read.xlsx(infile$datapath, 1)
     dat <- dataThreshold()
     if (dat$Gross.Media.Spend[1] == -99){
       return(paste("Data does not meet minimum observation threshold.",
@@ -155,6 +141,60 @@ shinyServer(function(input, output) {
                     "\n", "Estimated CPA:", outputcpa)
     output
   })
+  
+  #GoalSeekFlight
+  #Outputs text string containing conversions & spend
+  #for a given flight period, assuming a CPA constraint
+  output$GoalSeekFlight <- renderText({
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(NULL)
+    
+    effgoal <- input$flightgoal
+    if(is.null(effgoal))
+      return(NULL)
+    
+    if(effgoal == 0)
+      return(NULL)
+    
+    dailybud <- input$maxspendflight
+    if(is.null(dailybud))
+      return(NULL)
+    
+    if(dailybud == 0)
+      return(NULL)
+    
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(paste("Data does not meet minimum observation threshold.",
+                   "At least 14 days of data should be included"))
+    }
+    daysinflight <- input$goalenddate - input$goalstartdate + 1
+  
+    xmin <- min(dat$Gross.Media.Spend)
+    
+    df <- data.frame(x=seq(xmin, input$maxspendflight, (input$maxspendflight - xmin)/10000))
+    
+    df <- evalmodelhr(df, dat, input$ylog, input$xlog, input$intercept)
+    df$goal <- effgoal
+    df$cpa <- df$x / df$y
+    df$goaldif <- abs(df$goal - df$cpa)
+    mindif <- min(df$goaldif)
+    outputdf <- subset(df, goaldif == mindif, select = x)[1]
+    outputy <- subset(df, goaldif == mindif, select = y)[1]
+    outputx <- outputdf$x[1]
+    outputy <- outputy * as.numeric(daysinflight)
+    outputx <- outputdf * as.numeric(daysinflight)
+    outputy$y <- round(outputy$y)
+    outputcpa <- subset(df, goaldif == mindif, select = cpa)[1]
+    outputcpa$cpa <- round(outputcpa$cpa, digits=4)
+    
+    output <- paste("At can efficiently spend up to :", dollar(outputx$x),
+                    "\n", "Estimated Conv:", outputy,
+                    "\n", "Estimated CPA:", outputcpa,)
+                  
+    output
+  }) #End Flight Goal Seek output
   
   
   #BudgetSeekOutput
