@@ -96,6 +96,8 @@ shinyServer(function(input, output) {
     print(thePlot)
   }) #End thePlot variable output for Model tab
   
+  #Daily Goal Seek Output
+  #outputs daily spend estimate to stay within specified CPA
   output$SpendHeadroom <- renderText({
     infile <- input$datfiles
     if (is.null(infile))
@@ -149,8 +151,18 @@ shinyServer(function(input, output) {
     output <- paste("We can efficiently spend up to ", dollar(outputdf$x), "daily",
                     "\n", "Estimated Conv:", outputy,
                     "\n", "Estimated CPA:", outputcpa)
+    
+    f.pvalue <- anova(model)$`Pr(>F)`[1]
+    rsq <- summary(model)$adj.r.squared
+    
+    if (f.pvalue > .05 | rsq < .7){
+      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
+                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
+                      output)
+    }
+    
     output
-  })
+  }) #End Daily Goal Seek Output
   
   #GoalSeekFlight
   #Outputs text string containing conversions & spend
@@ -203,7 +215,16 @@ shinyServer(function(input, output) {
     output <- paste("At can efficiently spend up to :", dollar(outputx$x),
                     "\n", "Estimated Conv:", outputy,
                     "\n", "Estimated CPA:", outputcpa)
-                  
+    
+    f.pvalue <- anova(model)$`Pr(>F)`[1]
+    rsq <- summary(model)$adj.r.squared
+    
+    if (f.pvalue > .05 | rsq < .7){
+      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
+                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
+                      output)
+    }
+    
     output
   }) #End Flight Goal Seek output
   
@@ -267,9 +288,13 @@ shinyServer(function(input, output) {
     output <- paste("We can efficiently spend up to ", dollar(input$dailybudget), "daily",
                     "\n", "Estimated Conv:", outputy,
                     "\n", "Estimated CPA:",outputcpa)
+    f.pvalue <- anova(model)$`Pr(>F)`[1]
+    rsq <- summary(model)$adj.r.squared
     
-    if (anova(model)$`Pr(>F)`[1] > .05){
-      output <- paste("WARNING:  Model is not statistically significant.", "\n", "\n", output)
+    if (f.pvalue > .05 | rsq < .7){
+      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
+                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
+                      output)
     }
     
     output
@@ -310,6 +335,15 @@ shinyServer(function(input, output) {
     output <- paste("Budget Remaining: ", dollar(input$flightbudget), "for the flight",
                     "\n", "Estimated Conv for remaining flight:", outputy,
                     "\n", "Estimated CPA for remaining flight:",outputcpa)
+    f.pvalue <- anova(model)$`Pr(>F)`[1]
+    rsq <- summary(model)$adj.r.squared
+    
+    if (f.pvalue > .05 | rsq < .7){
+      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
+                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
+                      output)
+    }
+    
     output
   }) #End BudgetSeekFlight output
 
