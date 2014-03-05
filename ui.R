@@ -39,38 +39,48 @@ shinyUI(pageWithSidebar(
   mainPanel(
     tabsetPanel(
       tabPanel("Upload", 
-               fileInput("datfiles", "Pick your data file:")
+               fileInput("datfiles", "Pick your data file:"),
+               verbatimTextOutput("DataInputMessage")
       ),
       
       tabPanel("Data", tableOutput("dat")),
       tabPanel('Model', 
                plotOutput('thePlot'),
                verbatimTextOutput('model')),
-      tabPanel("Goal Seek",
+      tabPanel("Daily Goal Seek",
                numericInput("goal", "What is your CPA Goal?", 0, 0, 10000),
                numericInput("maxspend", "What is your maximum daily spend?", 0, 0, 10000000),
                verbatimTextOutput("SpendHeadroom")
-      ), #End GoalSeek tab
+      ), #End DailyGoalSeek tab
       
-      #Budget Seek Tab
-      tabPanel("Budget Seek",
-              wellPanel(
-                  h4("Daily Estimates"),
-                  numericInput("dailybudget", "What is your Daily Spend Limit?",0,0,1000000000),
-                  verbatimTextOutput("BudgetSeekOutput")
-               ),
-               wellPanel(
-                        h4("Flight Estimates"),
-                        dateInput("startdate", "Start Date", value= "2014-1-1", min = "2010-1-1", max = "2020-12-31",
-                                  format = "mm/dd/yyyy"),
-                        dateInput("enddate", "End Date", value= "2014-3-31", min = "2010-1-1", max = "2020-12-31",
-                                  format = "mm/dd/yyyy"),
-
-                        numericInput("flightbudget", "What is your Remaining Budget with Incremental?",0,0,1000000000),
-                        verbatimTextOutput("BudgetSeekFlight")
-               )
+      tabPanel("Flight Goal Seek", 
+               h4("Flight Estimates"),
+               dateInput("goalstartdate", "Start Date", value= "2014-1-1", min = "2010-1-1", max = "2020-12-31",
+                         format = "mm/dd/yyyy"),
+               dateInput("goalenddate", "End Date", value= "2014-3-31", min = "2010-1-1", max = "2020-12-31",
+                         format = "mm/dd/yyyy"),
                
-      ) #End BudgetSeek Tab
+               numericInput("flightgoal", "What is the desired CPA for the remaining flight?",0,0,1000000000),
+               numericInput("maxspendflight", "What is your maximum daily spend?",0,0,1000000000),
+               verbatimTextOutput("GoalSeekFlight")
+      ), # End GoalSeek Flight Tab
+      #Budget Seek  Tab
+      tabPanel("Daily Budget Seek",
+              h4("Daily Estimates"),
+              numericInput("dailybudget", "What is your Daily Spend Limit?",0,0,1000000000),
+              verbatimTextOutput("BudgetSeekOutput")
+               
+      ), #End Daily BudgetSeek Tab
+      tabPanel("Flight Budget Seek", 
+               h4("Flight Estimates"),
+               dateInput("startdate", "Start Date", value= "2014-1-1", min = "2010-1-1", max = "2020-12-31",
+                         format = "mm/dd/yyyy"),
+               dateInput("enddate", "End Date", value= "2014-3-31", min = "2010-1-1", max = "2020-12-31",
+                         format = "mm/dd/yyyy"),
+               
+               numericInput("flightbudget", "What is your Remaining Budget with Incremental?",0,0,1000000000),
+               verbatimTextOutput("BudgetSeekFlight")
+      ) # End BudgetSeek Flight Tab
       
     ) #End TabSetPanel
   )  #End MainPanel
