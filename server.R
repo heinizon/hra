@@ -180,22 +180,22 @@ shinyServer(function(input, output) {
     df$cpa <- df$x / df$y
     df$goaldif <- abs(df$goal - df$cpa)
     mindif <- min(df$goaldif)
-    outputdf <- subset(df, goaldif == mindif, select = x)[1]
+    outputx <- subset(df, goaldif == mindif, select = x)[1]
     outputy <- subset(df, goaldif == mindif, select = y)[1]
-    outputx <- outputdf$x[1]
+    #outputx <- outputdf$x[1]
+    print(paste("Days:", daysinflight, "\n", outputx$x))
     outputy <- outputy * as.numeric(daysinflight)
-    outputx <- outputdf * as.numeric(daysinflight)
+    outputx <- outputx * as.numeric(daysinflight)
     outputy$y <- round(outputy$y)
     outputcpa <- subset(df, goaldif == mindif, select = cpa)[1]
     outputcpa$cpa <- round(outputcpa$cpa, digits=4)
-    
+
     output <- paste("At can efficiently spend up to :", dollar(outputx$x),
                     "\n", "Estimated Conv:", outputy,
-                    "\n", "Estimated CPA:", outputcpa,)
+                    "\n", "Estimated CPA:", outputcpa)
                   
     output
   }) #End Flight Goal Seek output
-  
   
   #BudgetSeekOutput
   #Outputs CPA & Conversions for a single day
