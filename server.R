@@ -19,7 +19,7 @@ install_load <- function (package1, ...)
   
 }
 
-install_load('shiny', 'xlsx', 'ggplot2', 'scales')
+install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych')
 
 shinyServer(function(input, output) {
   
@@ -35,7 +35,17 @@ shinyServer(function(input, output) {
   
   output$DataInputMessage <- renderText(paste("Your file should contain at least the following columns:",
         "Date, Gross Media Spend, Conversions", "\n",
-        "Each day should appear only once in your data."))
+        "Each day should appear only once in your data."))  #End of DataInputMessage
+  
+
+  
+  output$DataSummary.UploadTab <- renderPrint({
+    DataSummary()
+  }) #end of DataSummary
+  
+  output$DataSummary.DataTab <- renderPrint({
+    DataSummary()
+  }) #end of DataSummary
   
   output$model <- renderPrint({
     infile <- input$datfiles
@@ -412,6 +422,24 @@ shinyServer(function(input, output) {
     
     dat
   } # End DataThreshold function
+
+#DataSummary function
+#returns back dstats of the uploaded data
+#or a text explanation of reason for failure
+DataSummary <- function(){
+  infile <- input$datfiles
+  if (is.null(infile))
+    return(paste("Data has not been Uploaded yet"))
+  
+  dat <- dataThreshold()
+  if (dat$Gross.Media.Spend[1] == -99){
+    return(paste("Data does not meet minimum observation threshold.",
+                 "At least 14 days of data should be included"))}
+  
+  dat2 <- dat[,c("Date","Gross.Media.Spend","Conversions")]
+  output <- describe(dat2, skew=FALSE)
+  output
+} #End DataSummary function
   
     
 }) # end ShinyServer I/O

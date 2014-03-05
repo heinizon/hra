@@ -40,10 +40,11 @@ shinyUI(pageWithSidebar(
     tabsetPanel(
       tabPanel("Upload", 
                fileInput("datfiles", "Pick your data file:"),
-               verbatimTextOutput("DataInputMessage")
+               verbatimTextOutput("DataInputMessage"),
+               verbatimTextOutput('DataSummary.UploadTab')
       ),
       
-      tabPanel("Data", tableOutput("dat")),
+      tabPanel("Data", verbatimTextOutput('DataSummary.DataTab'), tableOutput("dat")),
       tabPanel('Model', 
                plotOutput('thePlot'),
                verbatimTextOutput('model')),
