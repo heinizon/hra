@@ -43,6 +43,9 @@ shinyUI(pageWithSidebar(
                verbatimTextOutput("DataInputMessage"),
                verbatimTextOutput('DataSummary.UploadTab')
       ),
+      tabPanel("Summary",
+               tableOutput("summarytab")
+      ), # end Summary Tab
       
       tabPanel("Data", verbatimTextOutput('DataSummary.DataTab'), tableOutput("dat")),
       tabPanel('Model', 
@@ -82,7 +85,7 @@ shinyUI(pageWithSidebar(
                numericInput("flightbudget", "What is your Remaining Budget with Incremental?",0,0,1000000000),
                verbatimTextOutput("BudgetSeekFlight")
       ) # End BudgetSeek Flight Tab
-      
+
     ) #End TabSetPanel
   )  #End MainPanel
 ))

@@ -19,7 +19,7 @@ install_load <- function (package1, ...)
   
 }
 
-install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych')
+install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr")
 
 shinyServer(function(input, output) {
   
@@ -197,6 +197,8 @@ shinyServer(function(input, output) {
     
     df <- data.frame(x=seq(xmin, input$maxspendflight, (input$maxspendflight - xmin)/10000))
     
+    model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
+    
     df <- evalmodelhr(df, dat, input$ylog, input$xlog, input$intercept)
     df$goal <- effgoal
     df$cpa <- df$x / df$y
@@ -204,8 +206,8 @@ shinyServer(function(input, output) {
     mindif <- min(df$goaldif)
     outputx <- subset(df, goaldif == mindif, select = x)[1]
     outputy <- subset(df, goaldif == mindif, select = y)[1]
-    #outputx <- outputdf$x[1]
-    print(paste("Days:", daysinflight, "\n", outputx$x))
+
+    
     outputy <- outputy * as.numeric(daysinflight)
     outputx <- outputx * as.numeric(daysinflight)
     outputy$y <- round(outputy$y)
@@ -215,6 +217,8 @@ shinyServer(function(input, output) {
     output <- paste("At can efficiently spend up to :", dollar(outputx$x),
                     "\n", "Estimated Conv:", outputy,
                     "\n", "Estimated CPA:", outputcpa)
+    
+   
     
     f.pvalue <- anova(model)$`Pr(>F)`[1]
     rsq <- summary(model)$adj.r.squared
@@ -347,18 +351,102 @@ shinyServer(function(input, output) {
     output
   }) #End BudgetSeekFlight output
 
+  #SummaryTabOutput
+  output$summarytab <- renderTable({
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(NULL)
+    
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(dat)
+    }
+    
+    evalinput <- data.frame(x=dat$Gross.Media.Spend)
+    evalresults <- subset(dat, select=c(Date, Gross.Media.Spend, Conversions))
+    modelstats <- data.frame(stat=c("Adj.R.Sqrd","Ftest.p.Value"))
+    
+    #logy ~ logx + b   (y, x, b)
+    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, TRUE)$y
+    evalresults$logy.logx.b <- evalresults$y
+    evalresults$logy.logx.b.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, TRUE, TRUE, TRUE)
+    modelstats$logy.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
 
+    #logy ~ logx
+    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, FALSE)$y
+    evalresults$logy.logx <- evalresults$y
+    evalresults$logy.logx.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, TRUE, TRUE, FALSE)
+    modelstats$logy.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    #logy ~ x + b
+    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, TRUE)$y
+    evalresults$logy.x.b <- evalresults$y
+    evalresults$logy.x.b.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, TRUE, FALSE, TRUE)
+    modelstats$logy.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    # logy ~ x
+    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, FALSE)$y
+    evalresults$logy.x <- evalresults$y
+    evalresults$logy.x.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, TRUE, FALSE, FALSE)
+    modelstats$logy.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    #y ~ logx + b
+    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, TRUE)$y
+    evalresults$y.logx.b <- evalresults$y
+    evalresults$y.logx.b.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, FALSE, TRUE, TRUE)
+    modelstats$y.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    #y ~ logx
+    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, FALSE)$y
+    evalresults$y.logx <- evalresults$y
+    evalresults$y.logx.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, FALSE, TRUE, FALSE)
+    modelstats$y.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    #y ~ x + b
+    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, TRUE)$y
+    evalresults$y.x.b <- evalresults$y
+    evalresults$y.x.b.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, FALSE, FALSE, TRUE)
+    modelstats$y.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    #y ~ x
+    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, FALSE)$y
+    evalresults$y.x <- evalresults$y
+    evalresults$y.x.resid <- evalresults$Conversions - evalresults$y
+    model <- modelhr(dat, FALSE, FALSE, FALSE)
+    modelstats$y.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+    
+    evalresids <- subset(evalresults, select=c("logy.logx.b.resid", "logy.logx.resid",
+                                               "logy.x.b.resid", "logy.x.resid", 
+                                               "y.logx.b.resid", "y.logx.resid", "y.x.b.resid",
+                                               "y.x.resid"))
+    n <- modelstats$stat
+    modelstats2 <- as.data.frame(t(modelstats[,-1]))
+    colnames(modelstats2) <- n
+    
+    output <- data.frame(describe(evalresids, skew = FALSE))
+    output$Adj.R.Sqrd <- modelstats2$Adj.R.Sqrd
+    output$Ftest.p.Value <- round(modelstats2$Ftest.p.Value,4)
+    output
+  })# end Summary Tab Output
+  
   
   #evalmodelhr
   #returns a dataframe object with a column ("y")
     #containing the evaluated model
   #Input is a data frame containing a column "x", used to evaluate the y's
   evalmodelhr <- function(xdf, dat, ylog, xlog, intercept) {
-      model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
+      model <- modelhr(dat, ylog, xlog, intercept)
       df <- data.frame(xdf)
       
       
-      if (input$intercept){
+      if (intercept){
         slope <- data.frame(summary(model)$coef)$Estimate[2]
         intercept <- data.frame(summary(model)$coef)$Estimate[1]
       }
@@ -367,8 +455,8 @@ shinyServer(function(input, output) {
         intercept <- 0
       }
       
-      if (input$xlog){
-        if (input$ylog) {  
+      if (xlog){
+        if (ylog) {  
           #branch for log1p(y) ~ log1p(x)
           df$y <- ((df$x + 1)^slope) * exp(intercept) - 1
         }
@@ -377,7 +465,7 @@ shinyServer(function(input, output) {
           df$y <- (log1p(df$x) * slope) + intercept
         }
       }
-      else if (input$ylog) {
+      else if (ylog) {
         #branch for log1p(y) ~ x
         df$y <- exp((df$x) * slope) * exp(intercept) - 1
       }
@@ -394,26 +482,26 @@ shinyServer(function(input, output) {
   #and boolean objects to include y log, x log and intercept
   modelhr <- function(dat, ylog, xlog, intercept) {
     
-    if (input$xlog)
-      if (input$ylog)
-        if (input$intercept)
+    if (xlog)
+      if (ylog)
+        if (intercept)
           model <- lm(log1p(Conversions) ~ log1p(Gross.Media.Spend),
                       data = dat)
     else
       model <- lm(log1p(Conversions) ~ 0 + log1p(Gross.Media.Spend),
                   data = dat)
     else
-      if (input$intercept)
+      if (intercept)
         model <- lm(Conversions ~ log1p(Gross.Media.Spend), data = dat)
     else
       model <- lm(Conversions ~ 0 + log1p(Gross.Media.Spend), data = dat)
-    else if (input$ylog)
-      if(input$intercept)
+    else if (ylog)
+      if(intercept)
         model <- lm(log1p(Conversions) ~ Gross.Media.Spend, data = dat)
     else
       model <- lm(log1p(Conversions) ~ 0 + Gross.Media.Spend, data = dat)
     else
-      if (input$intercept)
+      if (intercept)
         model <- lm(Conversions ~ Gross.Media.Spend, data = dat)
     else
       model <- lm(Conversions ~ 0 + Gross.Media.Spend, data = dat)
