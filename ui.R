@@ -41,13 +41,15 @@ shinyUI(pageWithSidebar(
       tabPanel("Upload", 
                fileInput("datfiles", "Pick your data file:"),
                verbatimTextOutput("DataInputMessage"),
-               verbatimTextOutput('DataSummary.UploadTab')
+               #verbatimTextOutput('DataSummary.UploadTab')
+               h3(textOutput('data.header')),
+               tableOutput("dat")
       ),
       tabPanel("Summary",
-               tableOutput("summarytab")
+               tableOutput("summarytab"),
+               verbatimTextOutput("best.model.guess")
       ), # end Summary Tab
       
-      tabPanel("Data", verbatimTextOutput('DataSummary.DataTab'), tableOutput("dat")),
       tabPanel('Model', 
                plotOutput('thePlot'),
                verbatimTextOutput('model')),

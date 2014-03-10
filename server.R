@@ -22,16 +22,30 @@ install_load <- function (package1, ...)
 install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr")
 
 shinyServer(function(input, output) {
+
   
   output$dat <- renderTable({
     infile <- input$datfiles
-    if (is.null(infile))
-      return(NULL)
-
-    dat <- dataThreshold()
+    if (is.null(infile)){
+      #return(NULL)
+      dat <- data.frame(Date=c("1/1/2014","1/2/2014","1/3/2014"), 
+                        Gross.Media.Spend=c("$2589.14","$2177.04","$2165.78"),
+                        Conversions=c(126,107,111))
+      return(dat)
+    }
+      
     
+    dat <- dataThreshold()
     dat
   }) #End data rendering for Data tab
+  
+  output$data.header <- renderText({
+    infile <- input$datfiles
+    if (is.null(infile)){
+      return(paste("Example Data Below"))
+    }
+    return(paste("Uploaded Data Below"))
+  })
   
   output$DataInputMessage <- renderText(paste("Your file should contain at least the following columns:",
         "Date, Gross Media Spend, Conversions", "\n",
@@ -101,7 +115,7 @@ shinyServer(function(input, output) {
   output$SpendHeadroom <- renderText({
     infile <- input$datfiles
     if (is.null(infile))
-      return(NULL)
+      return(paste("No Data Has Been Uploaded"))
     
     effgoal <- input$goal
     if(is.null(effgoal))
@@ -170,7 +184,7 @@ shinyServer(function(input, output) {
   output$GoalSeekFlight <- renderText({
     infile <- input$datfiles
     if (is.null(infile))
-      return(NULL)
+      return(paste("No Data Has Been Uploaded"))
     
     effgoal <- input$flightgoal
     if(is.null(effgoal))
@@ -237,7 +251,7 @@ shinyServer(function(input, output) {
   output$BudgetSeekOutput <- renderText({
     infile <- input$datfiles
     if (is.null(infile))
-      return(NULL)
+      return(paste("No Data Has Been Uploaded"))
     
     dailybud <- input$dailybudget
     if(is.null(dailybud))
@@ -310,7 +324,7 @@ shinyServer(function(input, output) {
   output$BudgetSeekFlight <- renderText({
     infile <- input$datfiles
     if (is.null(infile))
-      return(NULL)
+      return(paste("No Data Has Been Uploaded"))
     
     dailybud <- input$flightbudget
     if(is.null(dailybud))
@@ -355,88 +369,128 @@ shinyServer(function(input, output) {
   output$summarytab <- renderTable({
     infile <- input$datfiles
     if (is.null(infile))
-      return(NULL)
+      return(data.frame(Warning=c("No Data Has Been Uploaded")))
     
     dat <- dataThreshold()
     if (dat$Gross.Media.Spend[1] == -99){
       return(dat)
     }
     
-    evalinput <- data.frame(x=dat$Gross.Media.Spend)
-    evalresults <- subset(dat, select=c(Date, Gross.Media.Spend, Conversions))
-    modelstats <- data.frame(stat=c("Adj.R.Sqrd","Ftest.p.Value"))
-    
-    #logy ~ logx + b   (y, x, b)
-    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, TRUE)$y
-    evalresults$logy.logx.b <- evalresults$y
-    evalresults$logy.logx.b.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, TRUE, TRUE, TRUE)
-    modelstats$logy.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-
-    #logy ~ logx
-    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, FALSE)$y
-    evalresults$logy.logx <- evalresults$y
-    evalresults$logy.logx.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, TRUE, TRUE, FALSE)
-    modelstats$logy.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    #logy ~ x + b
-    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, TRUE)$y
-    evalresults$logy.x.b <- evalresults$y
-    evalresults$logy.x.b.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, TRUE, FALSE, TRUE)
-    modelstats$logy.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    # logy ~ x
-    evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, FALSE)$y
-    evalresults$logy.x <- evalresults$y
-    evalresults$logy.x.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, TRUE, FALSE, FALSE)
-    modelstats$logy.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    #y ~ logx + b
-    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, TRUE)$y
-    evalresults$y.logx.b <- evalresults$y
-    evalresults$y.logx.b.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, FALSE, TRUE, TRUE)
-    modelstats$y.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    #y ~ logx
-    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, FALSE)$y
-    evalresults$y.logx <- evalresults$y
-    evalresults$y.logx.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, FALSE, TRUE, FALSE)
-    modelstats$y.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    #y ~ x + b
-    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, TRUE)$y
-    evalresults$y.x.b <- evalresults$y
-    evalresults$y.x.b.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, FALSE, FALSE, TRUE)
-    modelstats$y.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    #y ~ x
-    evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, FALSE)$y
-    evalresults$y.x <- evalresults$y
-    evalresults$y.x.resid <- evalresults$Conversions - evalresults$y
-    model <- modelhr(dat, FALSE, FALSE, FALSE)
-    modelstats$y.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
-    
-    evalresids <- subset(evalresults, select=c("logy.logx.b.resid", "logy.logx.resid",
-                                               "logy.x.b.resid", "logy.x.resid", 
-                                               "y.logx.b.resid", "y.logx.resid", "y.x.b.resid",
-                                               "y.x.resid"))
-    n <- modelstats$stat
-    modelstats2 <- as.data.frame(t(modelstats[,-1]))
-    colnames(modelstats2) <- n
-    
-    output <- data.frame(describe(evalresids, skew = FALSE))
-    output$Adj.R.Sqrd <- modelstats2$Adj.R.Sqrd
-    output$Ftest.p.Value <- round(modelstats2$Ftest.p.Value,4)
+    output <- Calculate.Model.Outputs(dat)
     output
+
   })# end Summary Tab Output
   
+  output$best.model.guess <- renderText({
+    infile <- input$datfiles
+    if (is.null(infile))
+      return(data.frame(Warning=c("No Data Has Been Uploaded")))
+    
+    dat <- dataThreshold()
+    if (dat$Gross.Media.Spend[1] == -99){
+      return(paste("Data does not meet minimum observation threshold.",
+                   "At least 14 days of data should be included"))
+    }
+    
+    output <- Calculate.Model.Outputs(dat)
+    
+    output <- subset(output, output$Ftest.p.Value < .05)
+    output$absmean <- abs(output$mean)
+    minmean <- min(output$absmean)
+    bestmodel <- row.names(subset(output, mean==minmean)[1])
+    
+    modelinputs <- data.frame(inputs=strsplit(bestmodel, "[.]"))
+    colnames(modelinputs) <- c("inputs")
+
+    if (nrow(modelinputs) == 3)
+      output <- paste(modelinputs$inputs[1], "=",modelinputs$inputs[2])
+    else
+      output <-paste(modelinputs$inputs[1], "=", modelinputs$inputs[2],"+",modelinputs$inputs[3])
+    
+    output <- paste("The Best Fit Model was estimated to be \n", output)
+    
+#     mindif <- min(df$goaldif)
+#     outputdf <- subset(df, goaldif == mindif, select = x)[1]
+  })
   
+Calculate.Model.Outputs <- function(dat){
+  evalinput <- data.frame(x=dat$Gross.Media.Spend)
+  evalresults <- subset(dat, select=c(Date, Gross.Media.Spend, Conversions))
+  modelstats <- data.frame(stat=c("Adj.R.Sqrd","Ftest.p.Value"))
+  
+  #logy ~ logx + b   (y, x, b)
+  evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, TRUE)$y
+  evalresults$logy.logx.b <- evalresults$y
+  evalresults$logy.logx.b.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, TRUE, TRUE, TRUE)
+  modelstats$logy.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  #logy ~ logx
+  evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, FALSE)$y
+  evalresults$logy.logx <- evalresults$y
+  evalresults$logy.logx.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, TRUE, TRUE, FALSE)
+  modelstats$logy.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  #logy ~ x + b
+  evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, TRUE)$y
+  evalresults$logy.x.b <- evalresults$y
+  evalresults$logy.x.b.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, TRUE, FALSE, TRUE)
+  modelstats$logy.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  # logy ~ x
+  evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, FALSE)$y
+  evalresults$logy.x <- evalresults$y
+  evalresults$logy.x.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, TRUE, FALSE, FALSE)
+  modelstats$logy.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  #y ~ logx + b
+  evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, TRUE)$y
+  evalresults$y.logx.b <- evalresults$y
+  evalresults$y.logx.b.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, FALSE, TRUE, TRUE)
+  modelstats$y.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  #y ~ logx
+  evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, FALSE)$y
+  evalresults$y.logx <- evalresults$y
+  evalresults$y.logx.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, FALSE, TRUE, FALSE)
+  modelstats$y.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  #y ~ x + b
+  evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, TRUE)$y
+  evalresults$y.x.b <- evalresults$y
+  evalresults$y.x.b.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, FALSE, FALSE, TRUE)
+  modelstats$y.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  #y ~ x
+  evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, FALSE)$y
+  evalresults$y.x <- evalresults$y
+  evalresults$y.x.resid <- evalresults$Conversions - evalresults$y
+  model <- modelhr(dat, FALSE, FALSE, FALSE)
+  modelstats$y.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  
+  evalresids <- subset(evalresults, select=c("logy.logx.b.resid", "logy.logx.resid",
+                                             "logy.x.b.resid", "logy.x.resid", 
+                                             "y.logx.b.resid", "y.logx.resid", "y.x.b.resid",
+                                             "y.x.resid"))
+  n <- modelstats$stat
+  modelstats2 <- as.data.frame(t(modelstats[,-1]))
+  colnames(modelstats2) <- n
+  
+  
+  output <- data.frame(describe(evalresids, skew = FALSE, range=FALSE))
+  output$Adj.R.Sqrd <- modelstats2$Adj.R.Sqrd
+  output$Ftest.p.Value <- round(modelstats2$Ftest.p.Value,4)
+  
+  output
+}  
+
+
   #evalmodelhr
   #returns a dataframe object with a column ("y")
     #containing the evaluated model
@@ -565,3 +619,6 @@ DataSummary <- function(){
   
     
 }) # end ShinyServer I/O
+
+
+
