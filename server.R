@@ -187,11 +187,7 @@ shinyServer(function(input, output) {
     f.pvalue <- anova(model)$`Pr(>F)`[1]
     rsq <- summary(model)$adj.r.squared
     
-    if (f.pvalue > .05 | rsq < .7){
-      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
-                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
-                      output)
-    }
+    output <- paste(WarningMessage(rsq, f.pvalue), "\n", output)
     
     output
   }) #End Daily Goal Seek Output
@@ -255,11 +251,7 @@ shinyServer(function(input, output) {
     f.pvalue <- anova(model)$`Pr(>F)`[1]
     rsq <- summary(model)$adj.r.squared
     
-    if (f.pvalue > .05 | rsq < .7){
-      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
-                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
-                      output)
-    }
+    output <- paste(WarningMessage(rsq, f.pvalue), "\n", output)
     
     output
   }) #End Flight Goal Seek output
@@ -327,11 +319,7 @@ shinyServer(function(input, output) {
     f.pvalue <- anova(model)$`Pr(>F)`[1]
     rsq <- summary(model)$adj.r.squared
     
-    if (f.pvalue > .05 | rsq < .7){
-      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
-                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
-                      output)
-    }
+    output <- paste(WarningMessage(rsq, f.pvalue), "\n", output)
     
     output
   })#End OutputBugetSeek output
@@ -377,11 +365,7 @@ shinyServer(function(input, output) {
     f.pvalue <- anova(model)$`Pr(>F)`[1]
     rsq <- summary(model)$adj.r.squared
     
-    if (f.pvalue > .05 | rsq < .7){
-      output <- paste("WARNING:  Model is not statistically significant.", "\n", 
-                      "F p-value:", round(f.pvalue,4), "\n", "Adj R Sqrd:", round(rsq,4), "\n", "\n",
-                      output)
-    }
+    output <- paste(WarningMessage(rsq, f.pvalue), "\n", output)
     
     output
   }) #End BudgetSeekFlight output
@@ -433,7 +417,28 @@ shinyServer(function(input, output) {
 #     mindif <- min(df$goaldif)
 #     outputdf <- subset(df, goaldif == mindif, select = x)[1]
   })
+
+#function returns
+WarningMessage <- function(rsq, f.pvalue){
+    warning.msg <- paste("")
+    if (f.pvalue > .05 | rsq < .7)
+        warning.msg <- paste("WARNING:"
+                             )
+    if (f.pvalue > .05)
+        warning.msg <- paste(warning.msg, "The selected model is not statistically significant. (F pvalue =",
+                             round(f.pvalue,2), ")","\n")
   
+    if (rsq < .7){
+        warning.msg <- paste(warning.msg, "Model explains only", percent(rsq), 
+                        "of variation in Conversion values", "\n")
+    }#end if
+    
+    
+    return(warning.msg)
+}#end WarningMessage function
+
+#function returns data.frame object with each row as a model
+#and summary stats for the model
 Calculate.Model.Outputs <- function(dat){
   evalinput <- data.frame(x=dat$Gross.Media.Spend)
   evalresults <- subset(dat, select=c(Date, Gross.Media.Spend, Conversions))
