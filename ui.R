@@ -53,13 +53,13 @@ shinyUI(pageWithSidebar(
       tabPanel('Model', 
                plotOutput('thePlot'),
                verbatimTextOutput('model')),
-      tabPanel("Daily Goal Seek",
+      tabPanel("Forecast Daily Spend",
                numericInput("goal", "What is your CPA Goal?", 0, 0, 10000),
                numericInput("maxspend", "What is your maximum daily spend?", 0, 0, 10000000),
                verbatimTextOutput("SpendHeadroom")
       ), #End DailyGoalSeek tab
       
-      tabPanel("Flight Goal Seek", 
+      tabPanel("Forecast Flight Spend", 
                h4("Flight Estimates"),
                dateInput("goalstartdate", "Start Date", value= "2014-1-1", min = "2010-1-1", max = "2020-12-31",
                          format = "mm/dd/yyyy"),
@@ -71,13 +71,13 @@ shinyUI(pageWithSidebar(
                verbatimTextOutput("GoalSeekFlight")
       ), # End GoalSeek Flight Tab
       #Budget Seek  Tab
-      tabPanel("Daily Budget Seek",
+      tabPanel("Forecast Daily CPA",
               h4("Daily Estimates"),
               numericInput("dailybudget", "What is your Daily Spend Limit?",0,0,1000000000),
               verbatimTextOutput("BudgetSeekOutput")
                
       ), #End Daily BudgetSeek Tab
-      tabPanel("Flight Budget Seek", 
+      tabPanel("Forecast Flight CPA", 
                h4("Flight Estimates"),
                dateInput("startdate", "Start Date", value= "2014-1-1", min = "2010-1-1", max = "2020-12-31",
                          format = "mm/dd/yyyy"),
