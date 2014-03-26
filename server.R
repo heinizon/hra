@@ -34,7 +34,7 @@ shinyServer(function(input, output) {
           y.label <- paste("y")
       
       if (input$intercept == TRUE)
-          intercept.label <- paste("b")
+          intercept.label <- paste("+ b")
       else
           intercept.label <- paste("")
         
