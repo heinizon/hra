@@ -428,11 +428,18 @@ WarningMessage <- function(rsq, f.pvalue){
                              )
     if (f.pvalue > .05)
         warning.msg <- paste(warning.msg, "The selected model is not statistically significant. (F pvalue =",
-                             round(f.pvalue,2), ")","\n")
+                             round(f.pvalue,2), ")", "We want an F pvalue < .05 to be deemed significant.",
+                             "\n","\n")
   
     if (rsq < .7){
         warning.msg <- paste(warning.msg, "Model explains only", percent(rsq), 
-                        "of variation in Conversion values", "\n")
+                        "of variation in conversions.")
+        if (rsq < .4){
+          warning.msg <- paste(warning.msg, "Spend is weakly correlated with conversions.", "\n")
+        }
+        else
+          warning.msg <- paste(warning.msg, "Spend is moderately correlated with conversions.", "\n")
+        
     }#end if
     
     
