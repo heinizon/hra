@@ -356,6 +356,9 @@ shinyServer(function(input, output) {
       return(paste("Data does not meet minimum observation threshold.",
                    "At least 14 days of data should be included"))
     }
+    
+    model <- modelhr(dat, input$ylog, input$xlog, input$intercept)
+    
     daysinflight <- input$enddate - input$startdate + 1
     daysremaining <- input$enddate - Sys.Date() + 1
     
