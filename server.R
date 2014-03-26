@@ -65,9 +65,11 @@ shinyServer(function(input, output) {
     return(paste("Uploaded Data Below"))
   })
   
-  output$DataInputMessage <- renderText(paste("Your file should contain at least the following columns:",
-        "Date, Gross Media Spend, Conversions", "\n",
-        "Each day should appear only once in your data."))  #End of DataInputMessage
+  output$DataInputMessage <- renderText(
+    paste("Your file should contain at least the following columns:",
+          "Date, Gross Media Spend, Conversions", "\n", "\n",
+          "All input files should be in the `.xlsx` format", "\n", "\n",
+          "Each day should appear only once in your data."))  #End of DataInputMessage
   
 
   
