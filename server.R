@@ -22,7 +22,25 @@ install_load <- function (package1, ...)
 install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr")
 
 shinyServer(function(input, output) {
-
+  output$model.output <- renderText({
+      if (input$xlog==TRUE)
+          x.label <- paste("log(x)")
+      else
+          x.label <- paste("x")
+      
+      if (input$ylog == TRUE)
+          y.label <- paste("log(y)")
+      else
+          y.label <- paste("y")
+      
+      if (input$intercept == TRUE)
+          intercept.label <- paste("b")
+      else
+          intercept.label <- paste("")
+        
+      modelstring <- paste(y.label,"=",x.label,intercept.label)
+      return(paste("Current Model:", "\n", modelstring))
+  })
   
   output$dat <- renderTable({
     infile <- input$datfiles

@@ -30,7 +30,7 @@ shinyUI(pageWithSidebar(
   # Sidebar with controls to select the variable to plot against mpg
   # and to specify whether outliers should be included
   sidebarPanel(
-    
+    h5(textOutput('model.output')),
     checkboxInput("intercept", "Non-Zero Intercept", F),
     checkboxInput("xlog", "log(x)", T),
     checkboxInput("ylog", "log(y)", T)
