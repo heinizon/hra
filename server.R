@@ -658,7 +658,7 @@ Calculate.Model.Outputs <- function(dat){
       
     
     }
-    else
+    else{
         warning.msg <- paste("")
         if(!("Conversions" %in% colnames(dat)))
             warning.msg <- paste("Missing 'Gross Media Spend',", warning.msg)
@@ -667,7 +667,8 @@ Calculate.Model.Outputs <- function(dat){
         if(!("Date" %in% colnames(dat)))
             warning.msg <- paste("Missing 'Date',", warning.msg)
         warning.msg <- paste("Uploaded data is missing columns.  R is Case Sensitive.  Missing columns:", warning.msg)
-      return(data.frame(MissingData=c(warning.msg)))
+        return(data.frame(MissingData=c(warning.msg)))
+    }
   } # End DataThreshold function
 
 #DataSummary function
