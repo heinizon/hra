@@ -87,7 +87,6 @@ shinyUI(pageWithSidebar(
                numericInput("flightbudget", "What is your Remaining Budget with Incremental?",0,0,1000000000),
                verbatimTextOutput("BudgetSeekFlight")
       ) # End BudgetSeek Flight Tab
-
     ) #End TabSetPanel
   )  #End MainPanel
 ))

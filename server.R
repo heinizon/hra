@@ -97,6 +97,7 @@ shinyServer(function(input, output) {
     summary(model)
   }) #End of Model tab Model output
   
+  
   output$thePlot <- renderPlot({
     infile <- input$datfiles
     if (is.null(infile))
@@ -149,6 +150,10 @@ shinyServer(function(input, output) {
       return(NULL)
     
     dat <- dataThreshold()
+    if ("MissingData" %in% colnames(dat)){
+      return(paste(dat$MissingData[1]))
+    }
+    
     if (dat$Gross.Media.Spend[1] == -99){
       return(paste("Data does not meet minimum observation threshold.",
                    "At least 14 days of data should be included"))
@@ -217,10 +222,17 @@ shinyServer(function(input, output) {
       return(NULL)
     
     dat <- dataThreshold()
+
+    if ("MissingData" %in% colnames(dat)){
+      return(paste(dat$MissingData[1]))
+    }
+    
     if (dat$Gross.Media.Spend[1] == -99){
       return(paste("Data does not meet minimum observation threshold.",
                    "At least 14 days of data should be included"))
     }
+
+  
     daysinflight <- input$goalenddate - input$goalstartdate + 1
   
     xmin <- min(dat$Gross.Media.Spend)
@@ -273,6 +285,10 @@ shinyServer(function(input, output) {
       return(NULL)
     
     dat <- dataThreshold()
+    if ("MissingData" %in% colnames(dat)){
+      return(paste(dat$MissingData[1]))
+    }
+    
     if (dat$Gross.Media.Spend[1] == -99){
       return(paste("Data does not meet minimum observation threshold.",
                    "At least 14 days of data should be included"))
@@ -342,6 +358,10 @@ shinyServer(function(input, output) {
       return(NULL)
 
     dat <- dataThreshold()
+    if ("MissingData" %in% colnames(dat)){
+      return(paste(dat$MissingData[1]))
+    }
+    
     if (dat$Gross.Media.Spend[1] == -99){
       return(paste("Data does not meet minimum observation threshold.",
                    "At least 14 days of data should be included"))
@@ -419,7 +439,7 @@ shinyServer(function(input, output) {
 #     mindif <- min(df$goaldif)
 #     outputdf <- subset(df, goaldif == mindif, select = x)[1]
   })
-
+  
 #function returns
 WarningMessage <- function(rsq, f.pvalue){
     warning.msg <- paste("")
@@ -611,27 +631,43 @@ Calculate.Model.Outputs <- function(dat){
       return(NULL)
     
     dat <- read.xlsx(infile$datapath, 1)
-    dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
-                        origin = "1970-01-01")
-    dat$Date <- paste0(dat$Date)
-    dat$Spend <- dat$Gross.Media.Spend
+
     
-    dat <- subset(dat, Gross.Media.Spend > 10)
+    if ("Gross.Media.Spend" %in% colnames(dat) & "Conversions" %in% colnames(dat) & "Date" %in% colnames(dat)){
+        dat$Date <- as.Date(dat$Date, format= "%m/%d/%y",
+                            origin = "1970-01-01")
+        dat$Date <- paste0(dat$Date)
+        dat$Spend <- dat$Gross.Media.Spend
+        
+        dat <- subset(dat, Gross.Media.Spend > 10)
+        
+        if (input$xlog)
+          dat$Spend <-log1p(dat$Gross.Media.Spend)
+        
+        dat$Conv <- dat$Conversions
+        if (input$ylog)
+          dat$Conv <- log1p(dat$Conversions)
+        
+        if(nrow(dat) >= 14)
+          dat
+        else
+          dat <- data.frame(Gross.Media.Spend=c(-99,paste('Does not meet minimum observations threshold.
+                                              Need at least 14 days of data to perform analysis')))
+        
+        dat
+      
     
-    if (input$xlog)
-      dat$Spend <-log1p(dat$Gross.Media.Spend)
-    
-    dat$Conv <- dat$Conversions
-    if (input$ylog)
-      dat$Conv <- log1p(dat$Conversions)
-    
-    if(nrow(dat) >= 14)
-      dat
+    }
     else
-      dat <- data.frame(Gross.Media.Spend=c(-99,paste('Does not meet minimum observations threshold.
-                                      Need at least 14 days of data to perform analysis')))
-    
-    dat
+        warning.msg <- paste("")
+        if(!("Conversions" %in% colnames(dat)))
+            warning.msg <- paste("Missing 'Gross Media Spend',", warning.msg)
+        if(!("Gross.Media.Spend" %in% colnames(dat)))
+            warning.msg <- paste("Missing Gross 'Media Spend',", warning.msg)
+        if(!("Date" %in% colnames(dat)))
+            warning.msg <- paste("Missing 'Date',", warning.msg)
+        warning.msg <- paste("Uploaded data is missing columns.  R is Case Sensitive.  Missing columns:", warning.msg)
+      return(data.frame(MissingData=c(warning.msg)))
   } # End DataThreshold function
 
 #DataSummary function
