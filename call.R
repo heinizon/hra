@@ -19,6 +19,7 @@ install_load <- function (package1, ...)
   
 }
 
+
 install_load("devtools")
 install_load("shiny")
 

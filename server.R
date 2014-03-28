@@ -21,6 +21,7 @@ install_load <- function (package1, ...)
 
 install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr")
 
+
 shinyServer(function(input, output) {
   output$model.output <- renderText({
       if (input$xlog==TRUE)
