@@ -25,17 +25,17 @@ install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr")
 shinyServer(function(input, output) {
   output$model.output <- renderText({
       if (input$xlog==TRUE)
-          x.label <- paste("log(x)")
+          x.label <- paste("log(Spend)")
       else
-          x.label <- paste("x")
+          x.label <- paste("Spend")
       
       if (input$ylog == TRUE)
-          y.label <- paste("log(y)")
+          y.label <- paste("log(Conversions)")
       else
-          y.label <- paste("y")
+          y.label <- paste("Conversions")
       
       if (input$intercept == TRUE)
-          intercept.label <- paste("+ b")
+          intercept.label <- paste("+ Intercept")
       else
           intercept.label <- paste("")
         
