@@ -32,8 +32,8 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     h5(textOutput('model.output')),
     checkboxInput("intercept", "Non-Zero Intercept", F),
-    checkboxInput("xlog", "log(x)", T),
-    checkboxInput("ylog", "log(y)", T)
+    checkboxInput("xlog", "log(Spend)", T),
+    checkboxInput("ylog", "log(Conversions)", T)
   ),
   
   mainPanel(
