@@ -19,7 +19,7 @@ install_load <- function (package1, ...)
   
 }
 
-install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr")
+install_load('shiny', 'xlsx', 'ggplot2', 'scales', 'psych', "plyr", "hydroGOF")
 
 
 shinyServer(function(input, output) {
@@ -437,8 +437,8 @@ shinyServer(function(input, output) {
     
     output <- paste("The Best Fit Model was estimated to be \n", output)
     
-#     mindif <- min(df$goaldif)
-#     outputdf <- subset(df, goaldif == mindif, select = x)[1]
+    output <- paste("Choose your best fit model based on: \n", "1. Ftest.p.Value < .05 \n", "2. Smallest or close to smallest RMSE \n", "3. High Adj.R.Sqrd")
+
   })
   
 #function returns
@@ -471,77 +471,92 @@ WarningMessage <- function(rsq, f.pvalue){
 #and summary stats for the model
 Calculate.Model.Outputs <- function(dat){
   evalinput <- data.frame(x=dat$Gross.Media.Spend)
+  
+  #evalresults will be a dataframe containing each model as a column, with the predicted ys as rows
+  #and a column containing the residuals for each model
   evalresults <- subset(dat, select=c(Date, Gross.Media.Spend, Conversions))
-  modelstats <- data.frame(stat=c("Adj.R.Sqrd","Ftest.p.Value"))
+  
+  #modelstats will be a dataframe containing each model as a column, with r2 and fpvalue as rows
+  modelstats <- data.frame(stat=c("Adj.R.Sqrd","Ftest.p.Value", "RMSE")) 
   
   #logy ~ logx + b   (y, x, b)
   evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, TRUE)$y
   evalresults$logy.logx.b <- evalresults$y
   evalresults$logy.logx.b.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, TRUE, TRUE, TRUE)
-  modelstats$logy.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$logy.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1], 
+                                    rmse(evalresults$y, evalresults$Conversions))
   
   #logy ~ logx
   evalresults$y <- evalmodelhr(evalinput, dat, TRUE, TRUE, FALSE)$y
   evalresults$logy.logx <- evalresults$y
   evalresults$logy.logx.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, TRUE, TRUE, FALSE)
-  modelstats$logy.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$logy.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                                  rmse(evalresults$y, evalresults$Conversions))
   
   #logy ~ x + b
   evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, TRUE)$y
   evalresults$logy.x.b <- evalresults$y
   evalresults$logy.x.b.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, TRUE, FALSE, TRUE)
-  modelstats$logy.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$logy.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                                 rmse(evalresults$y, evalresults$Conversions))
   
   # logy ~ x
   evalresults$y <- evalmodelhr(evalinput, dat, TRUE, FALSE, FALSE)$y
   evalresults$logy.x <- evalresults$y
   evalresults$logy.x.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, TRUE, FALSE, FALSE)
-  modelstats$logy.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$logy.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                               rmse(evalresults$y, evalresults$Conversions))
   
   #y ~ logx + b
   evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, TRUE)$y
   evalresults$y.logx.b <- evalresults$y
   evalresults$y.logx.b.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, FALSE, TRUE, TRUE)
-  modelstats$y.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$y.logx.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                                 rmse(evalresults$y, evalresults$Conversions))
   
   #y ~ logx
   evalresults$y <- evalmodelhr(evalinput, dat, FALSE, TRUE, FALSE)$y
   evalresults$y.logx <- evalresults$y
   evalresults$y.logx.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, FALSE, TRUE, FALSE)
-  modelstats$y.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$y.logx.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                               rmse(evalresults$y, evalresults$Conversions))
   
   #y ~ x + b
   evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, TRUE)$y
   evalresults$y.x.b <- evalresults$y
   evalresults$y.x.b.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, FALSE, FALSE, TRUE)
-  modelstats$y.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$y.x.b.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                              rmse(evalresults$y, evalresults$Conversions))
   
   #y ~ x
   evalresults$y <- evalmodelhr(evalinput, dat, FALSE, FALSE, FALSE)$y
   evalresults$y.x <- evalresults$y
   evalresults$y.x.resid <- evalresults$Conversions - evalresults$y
   model <- modelhr(dat, FALSE, FALSE, FALSE)
-  modelstats$y.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1])
+  modelstats$y.x.resid <- c(summary(model)$adj.r.squared, anova(model)$`Pr(>F)`[1],
+                            rmse(evalresults$y, evalresults$Conversions))
   
+  #evalresids will contain only the columns from evalresults that are residuals
   evalresids <- subset(evalresults, select=c("logy.logx.b.resid", "logy.logx.resid",
                                              "logy.x.b.resid", "logy.x.resid", 
                                              "y.logx.b.resid", "y.logx.resid", "y.x.b.resid",
                                              "y.x.resid"))
   n <- modelstats$stat
-  modelstats2 <- as.data.frame(t(modelstats[,-1]))
+  modelstats2 <- as.data.frame(t(modelstats[,-1])) #transposes modelstats in modelstats2
   colnames(modelstats2) <- n
   
   
   output <- data.frame(describe(evalresids, skew = FALSE, range=FALSE))
   output$Adj.R.Sqrd <- modelstats2$Adj.R.Sqrd
   output$Ftest.p.Value <- round(modelstats2$Ftest.p.Value,4)
+  output$RMSE <- modelstats2$RMSE
   
   output
 }  
